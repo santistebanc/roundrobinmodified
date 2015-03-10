@@ -1,11 +1,82 @@
-var players = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-  'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+//TODO: Use unique ids instead of names
+//TODO: Allow defaults
+
+var players = ['Alejandro', 'Bernardo', 'Claudio', 'Dionisio',
+  'Eustacio', 'Fulereno', 'Gonzalo', 'Humberto',
+  'Ignacio', 'Jacinto', 'Kakalaka', 'Lucifer',
+  'Mauricio', 'Norberto', 'Oscar', 'Paulino',
+  'Quike', 'Roberto', 'Samuel', 'Tamaulipo',
+  'Ulises', 'Venancio', 'Wokoloko', 'Xavier',
+  'Yehova', 'Zacarias'
 ];
-var stage = {rounds:[{layout:[]}]};
 var settings = {
   rounds: [{
     simulations: 100,
     cycles: [{
+      groups: [{
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 3
+      }, {
+        groupsize: 3
+      }]
+    }, {
+      groups: [{
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 3
+      }, {
+        groupsize: 3
+      }]
+    }, {
+      groups: [{
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 3
+      }, {
+        groupsize: 3
+      }]
+    }, {
+      groups: [{
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 4
+      }, {
+        groupsize: 3
+      }, {
+        groupsize: 3
+      }]
+    }, {
       groups: [{
         groupsize: 4
       }, {
@@ -169,28 +240,29 @@ var Simulation = function(players, roundsettings) {
 }
 
 function createRound(roundplayers, roundsettings) {
-  var finalresult;
-  var count = 0;
-  var leastreps = players.length;
-  var done = _.after(roundsettings.simulations, function() {
-    console.log('final result: ', finalresult);
-  });
-  _.times(roundsettings.simulations, function() {
-    var promise = new Promise(function(resolve) {
-      var sim1 = new Simulation(roundplayers, roundsettings);
-      var bracket = sim1.generate();
-      resolve(bracket);
+  return new Promise(function(resolve) {
+    var finalresult;
+    var leastreps = players.length;
+    var done = _.after(roundsettings.simulations, function() {
+      console.log('done here');
+      resolve(finalresult);
+    });
+    _.times(roundsettings.simulations, function() {
+      var promise = new Promise(function(resolve) {
+        var sim1 = new Simulation(roundplayers, roundsettings);
+        var bracket = sim1.generate();
+        resolve(bracket);
+      }).then(function(bracket) {
+        if (bracket.repetitions < leastreps) {
+          leastreps = bracket.repetitions;
+          finalresult = bracket;
+        }
+        done();
+        _.each(bracket.layout, function(cycle) {});
+      }, function(err) {
+        console.log('error', err);
+      });
     });
 
-    promise.then(function(bracket) {
-      if (bracket.repetitions < leastreps) {
-        leastreps = bracket.repetitions;
-        finalresult = bracket;
-      }
-      done();
-      _.each(bracket.layout, function(cycle) {});
-    }, function(err) {
-      console.log('error', err);
-    });
   });
 }
