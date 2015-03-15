@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Your page title</title>
+  <title>RoundRobin</title>
 
   <!-- Modernizr -->
   <script src="js/libs/modernizr-2.6.2.min.js"></script>
@@ -20,8 +20,24 @@
   <link type="text/css" rel="stylesheet" href="css/groundwork-anim.css">
   <link type="text/css" rel="stylesheet" href="css/groundwork-ie.css">
   <![endif]-->
+  <style>
+    body {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    .player:hover {
+      cursor: default;
+    }
+  </style>
 
   <script src='underscore.js'></script>
+  <script src="js/react.js"></script>
+  <script src="js/JSXTransformer.js"></script>
 </head>
 
 <body>
@@ -31,10 +47,12 @@
   </div>
   <div class="row double-pad-top">
     <div id='stage' class='box'>
-    <div id='round1' class='info box'>
-    </div>
+      <div id='round1' class='info box'>
+      </div>
     </div>
   </div>
+  <div id="example"></div>
+  <script type="text/jsx" src='reactinterface.js'> </script>
 
   <script type="text/javascript" src="js/libs/jquery-1.10.2.min.js"></script>
   <script type="text/javascript" src="js/groundwork.all.js"></script>
