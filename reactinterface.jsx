@@ -1,76 +1,52 @@
 var stage = {
-  rounds: [{
-    id: 0,
-    simulations: 500,
-    cycles: [{
-      id: 0,
-      groups: [{
-        id: 0,
-        groupsize: 4,
-        places:[{name:'Juan'},{},{},{}]
-      },{
-        id: 1,
-        groupsize: 4,
-        places:[{},{},{},{}]
-      },{
-        id: 2,
-        groupsize: 4,
-        places:[{},{},{},{}]
-      }]},
-      {
-        id: 1,
-        groups: [{
-          id: 0,
-          groupsize: 4,
-          places:[{},{},{},{}]
-        },{
-          id: 1,
-          groupsize: 4,
-          places:[{},{},{},{}]
-        },{
-          id: 2,
-          groupsize: 4,
-          places:[{},{},{},{}]
-        }]},
-        {
-          id: 2,
-          groups: [{
-            id: 0,
-            groupsize: 4,
-            places:[{},{},{},{}]
-          },{
-            id: 1,
-            groupsize: 4,
-            places:[{},{},{},{}]
-          },{
-            id: 2,
-            groupsize: 4,
-            places:[{},{},{},{}]
-          }]}]
-  }]
+  players:[],
+  rounds: [{id: 0, simulations: 1, cycles: [{id: 0, groups: [{id: 0, places: [{id:0,status:0},{id:1,status:0},{id:2,status:0}]},
+                                                               {id: 1, places: [{id:0,status:0},{id:1,status:0},{id:2,status:0}]}]
+                                              },
+                                              {id: 1, groups: [{id: 0, places: [{id:0,status:0},{id:1,status:0},{id:2,status:0}]},
+                                                               {id: 1, places: [{id:0,status:0},{id:1,status:0},{id:2,status:0}]}]
+                                              }]
+           }]
 };
+
+var Player = function(id, name, played, notplayed){
+  this.id = id;
+  this.status = 1;
+  this.name = name;
+  this.repeated = false;
+
+  this.played = [];
+  this.notplayed = [];
+}
+
+var registerednames = ['A','B','C','D','E','F'];
+//create list of players with porperties
+var listofplayers = _.map(registerednames,function(name,index){
+  return new Player(index,name);
+});
+_.each(listofplayers,function(player,index){
+  player.notplayed = listofplayers.slice();
+});
+stage.players = listofplayers;
+stage.rounds[0].players = listofplayers;
+
+
 
 var worker = new Worker('worker.js');
 
-
-function drawRound(roundindex, bracket) {
-  var round = stage.rounds[roundindex];
-  _.each(bracket.layout, function(cycle, cycleindex) {
-    _.each(cycle, function(group, groupindex) {
-      _.each(group, function(player, playerindex) {
-        round.cycles[cycleindex].groups[groupindex].places[playerindex] = player;
-      });
-    });
-  });
-}
-
 var Place = React.createClass({
   render: function() {
+    if(this.props.data.status == 0){
+      return (
+        <div className='box inline-block'><small>empty</small></div>
+      )
+    }else{
     return (
       <div className='blue box inline-block'>
       <h4>{this.props.data.name}</h4>
       </div>
     )
+    }
   }
 });
 
@@ -80,7 +56,7 @@ var Group = React.createClass({
       <div className='success box inline-block'>
       <h5>Group {this.props.num+1}</h5>
       {this.props.data.places.map(function(place,index){
-            return(<Place data={place} num={index} />)
+            return(<Place data={place} num={index} key={place.id} />)
         })}
       </div>
     )
@@ -135,13 +111,24 @@ var GenerateBut = React.createClass({
       this.setState({status:1});
       this.setState({message:(<span><i className="icon-spinner icon-spin"></i> Loading</span>)});
       var self = this;
-      var args = [players,stage.rounds[0]];
+
+      var round1 = stage.rounds[0];
+      //clone round1 players
+      round1.players = _.map(round1.players,function(player){
+          return new Player(player.id,player.name);
+      });
+      _.each(round1.players,function(player,index){
+        player.notplayed = round1.players.slice();
+      });
+      console.log('round1',round1);
+
+      var args = [round1];
       var callback = function(e) {
         var result = e.data.result;
         if (e.data.status == 1) {
           self.setState({message:(<span><i className="icon-refresh"></i> Reload</span>)});
           self.setState({status:0});
-          drawRound(0, result);
+          stage.rounds[0] = result;
           self.props.onUpdate();
             worker.removeEventListener('message', callback , false);
         }
@@ -188,13 +175,6 @@ React.render(
   <App />,
   document.getElementById('app')
 );
-
-function stop() {
-  // worker.terminate() from this script would also stop the worker.
-  worker.postMessage({
-    'cmd': 'stop'
-  });
-}
 
 worker.addEventListener('message', function(e){
   console.log(e.data);
