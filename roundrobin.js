@@ -7,14 +7,36 @@ var Simulation = function() {
     //initialize
     var bracket = round;
     bracket.repetitions = 0;
+    //reset repetitions, played, notplayed, repeatedwith
+    _.each(bracket.players, function(player) {
+      player.repeatedwith = [];
+      player.played = [];
+      player.notplayed = bracket.players;
+    });
 
     _.each(bracket.cycles, function(cycle) {
       var remainingplayers = bracket.players;
+      //remove locked players from remainingplayers
+      _.each(cycle.groups, function(group) {
+        _.each(group.places, function(place, index, places) {
+          if (place.locked) {
+            remainingplayers = _.without(remainingplayers, place.player);
+          }
+        });
+      });
       _.each(cycle.groups, function(group) {
         var inthegroup = [];
+        //set cache
+        group.cache = _.map(bracket.players,function(player){
+          var obj = {};
+          return _.extend(obj, player);
+        });
         _.each(group.places, function(place, index, places) {
-
-          //order remainingplayers
+          var winner;
+          if (place.locked) {
+            winner = places[index].player;
+          } else {
+            //order remainingplayers
             var groupedbyplayed = _.groupBy(remainingplayers, function(player) {
               return player.played.length;
             });
@@ -24,39 +46,35 @@ var Simulation = function() {
             });
             var flatthem = _.flatten(shuffled);
             remainingplayers = flatthem;
-          //
-          var chosen = _.first(remainingplayers);
-
-
-          if (index == 0) {
-            //insert player if is first in group
-            inthegroup.push(chosen);
-            places[index] = chosen;
-            remainingplayers = _.without(remainingplayers, chosen);
-          } else {
-
-            inthegroup = _.sortBy(inthegroup, function(player) {
-              return player.played.length;
-            });
-            //calculate possible players
-            var candidates = _.reduce(inthegroup, function(memo, player) {
-              return _.intersection(memo, player.notplayed);
-            }, remainingplayers);
-            var winner;
-            if (candidates.length > 0) {
-              //choose player to be put
-              winner = _.first(candidates);
-              places[index] = winner;
-            } else {
-              //because no available candidates put any player
+            //
+            if (index == 0) {
+              //insert player if is first in group
               winner = _.first(remainingplayers);
-              //console.log('repetition found with ' + winner);
-              places[index] = winner;
-              bracket.repetitions++;
+            } else {
+              inthegroup = _.sortBy(inthegroup, function(player) {
+                return player.played.length;
+              });
+              //calculate possible players
+              var candidates = _.reduce(inthegroup, function(memo, player) {
+                return _.intersection(memo, player.notplayed);
+              }, remainingplayers);
+              if (candidates.length > 0) {
+                //choose player to be put
+                winner = _.first(candidates);
+                places[index].player = winner;
+              } else {
+                //because no available candidates put any player
+                winner = _.first(remainingplayers);
+                bracket.repetitions++;
+              }
             }
+          }
+          //add winner player to place
+          places[index].player = winner;
+          if (winner) {
             inthegroup.push(winner);
             remainingplayers = _.without(remainingplayers, winner);
-            //change played and notplayed in stats
+            //change played and notplayed in players
             _.each(inthegroup, function(player) {
               player.played = _.without(_.union(player.played, inthegroup), player);
               player.notplayed = _.difference(player.notplayed, inthegroup);
@@ -67,7 +85,9 @@ var Simulation = function() {
     });
     //get lowestplayed and highestplayed
     var lowest = bracket.leastagainst;
-    var sorted = _.sortBy(bracket.players, function(player) {  return player.played.length;});
+    var sorted = _.sortBy(bracket.players, function(player) {
+      return player.played.length;
+    });
     bracket.leastagainst = _.first(sorted).played.length;
     bracket.mostagainst = _.last(sorted).played.length;
 
@@ -93,7 +113,7 @@ function createRound(round) {
           leastreps = bracket.repetitions;
           lowest = bracket.leastagainst;
           finalresult = bracket;
-        }else if (bracket.repetitions === leastreps) {
+        } else if (bracket.repetitions === leastreps) {
           if (bracket.leastagainst > lowest) {
             leastreps = bracket.repetitions;
             lowest = bracket.leastagainst;
