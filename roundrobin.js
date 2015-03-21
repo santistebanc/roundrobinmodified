@@ -90,7 +90,6 @@ var Simulation = function() {
     });
     bracket.leastagainst = _.first(sorted).played.length;
     bracket.mostagainst = _.last(sorted).played.length;
-
     return bracket;
   };
 }
